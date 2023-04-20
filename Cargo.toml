@@ -1,0 +1,18 @@
+[package]
+name = "vivace"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+reqwest = { version = "0.11.16", features = ["blocking"] }
+regex = "1.7.3"
+tokio = { version = "1.27.0", features = ["macros", "rt-multi-thread"] }
+json = "0.12.4"
+error-chain = "0.12.4"
+ytb-downloader = "0.1.0" 
+env_logger = "0.10.0"
+log = "0.4.17"
+clap = { version = "4.2.4", features = ["derive"] }
+

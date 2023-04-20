@@ -24,6 +24,8 @@
 
 Command line tool in Rust to download songs from Youtube to whatever encoding you want
 
+Note: [ffmpeg](https://ffmpeg.org/) needs to be present on your system
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 

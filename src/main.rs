@@ -6,8 +6,9 @@ use std::{env, str::FromStr, process::Output};
 use ytb_downloader::*;
 use clap::Parser;
 use parser::Args;
-use log::info;
+use log::{info,warn};
 use std::process::Command;
+use std::fs::remove_file;
 
 mod parser;
 
@@ -116,6 +117,12 @@ async fn run(args: Args) -> Result<()> {
     info!("Converting audio from {file_extension} type to {outfile_extension}...");
     convert(&temp_file, &outfile).chain_err(|| "Error while converting file")?;
     info!("Done.");
+
+    // Remove temp file
+    match remove_file(&temp_file) {
+        Ok(()) => info!("Temp file deleted."),
+        Err(_e) => warn!("Could not delete temp file."),
+    };
 
     Ok(())
 }

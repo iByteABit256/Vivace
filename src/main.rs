@@ -33,7 +33,7 @@ pub mod errors {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 /// Types of operating systems
 pub enum OS {
     /// Linux operating systems
@@ -89,7 +89,7 @@ async fn run(args: Args) -> Result<()> {
     // File to write to
     let outfile = args.output_file;
 
-    let outfile_parts = outfile.split_once(".").unwrap();
+    let outfile_parts = outfile.split_once('.').unwrap();
     let outfile_name = outfile_parts.0;
     let outfile_extension = outfile_parts.1;
 
@@ -99,13 +99,13 @@ async fn run(args: Args) -> Result<()> {
     // Gets the first available audio format
     let source = get_available_sources(&url)
         .await.chain_err(|| "Could not get any available video formats from Youtube")?
-        .into_iter().filter(|s| s.mime_type.contains("audio")).next().chain_err(|| "No audio formats found")?;
+        .into_iter().find(|s| s.mime_type.contains("audio")).chain_err(|| "No audio formats found")?;
     info!("Found audio source.");
 
     // Encoding of audio format
-    let file_extension = source.mime_type.rsplit_once(";")
+    let file_extension = source.mime_type.rsplit_once(';')
         .chain_err(|| "Error while parsing file extension")?
-        .0.split_once("/")
+        .0.split_once('/')
         .chain_err(|| "Error while parsing file extension")?
         .1;
 

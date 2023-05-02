@@ -1,21 +1,21 @@
-//! Vivace 
+//! Vivace
 //!
-//! A command line tool for downloading songs from Youtube 
-use errors::*;
-use std::{env, str::FromStr, process::Output};
-use ytb_downloader::*;
+//! A command line tool for downloading songs from Youtube
 use clap::Parser;
+use errors::*;
+use log::{info, warn};
 use parser::Args;
-use log::{info,warn};
-use std::process::Command;
 use std::fs::remove_file;
+use std::process::Command;
+use std::{env, process::Output, str::FromStr};
+use ytb_downloader::*;
 
 mod parser;
 
 #[macro_use]
 extern crate error_chain;
 
-/// Error types of Vivace 
+/// Error types of Vivace
 pub mod errors {
     use std::io;
 
@@ -28,7 +28,7 @@ pub mod errors {
             UnsupportedOperatingSystemError {
                 description("I'm sorry, your operating system is unsupported at the moment :("),
                 display("I'm sorry, your operating system is unsupported at the moment :("),
-            } 
+            }
         }
     }
 }
@@ -39,7 +39,7 @@ pub enum OS {
     /// Linux operating systems
     LINUX,
     /// Windows operating systems
-    WINDOWS
+    WINDOWS,
 }
 
 impl FromStr for OS {
@@ -47,9 +47,9 @@ impl FromStr for OS {
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         match s {
-            "linux"   => Ok(OS::LINUX),
+            "linux" => Ok(OS::LINUX),
             "windows" => Ok(OS::WINDOWS),
-            _         => Err(ErrorKind::UnsupportedOperatingSystemError)
+            _ => Err(ErrorKind::UnsupportedOperatingSystemError),
         }
     }
 }
@@ -98,20 +98,28 @@ async fn run(args: Args) -> Result<()> {
 
     // Gets the first available audio format
     let source = get_available_sources(&url)
-        .await.chain_err(|| "Could not get any available video formats from Youtube")?
-        .into_iter().find(|s| s.mime_type.contains("audio")).chain_err(|| "No audio formats found")?;
+        .await
+        .chain_err(|| "Could not get any available video formats from Youtube")?
+        .into_iter()
+        .find(|s| s.mime_type.contains("audio"))
+        .chain_err(|| "No audio formats found")?;
     info!("Found audio source.");
 
     // Encoding of audio format
-    let file_extension = source.mime_type.rsplit_once(';')
+    let file_extension = source
+        .mime_type
+        .rsplit_once(';')
         .chain_err(|| "Error while parsing file extension")?
-        .0.split_once('/')
+        .0
+        .split_once('/')
         .chain_err(|| "Error while parsing file extension")?
         .1;
 
     // Temp file to write video with original encoding to
     let temp_file = format!("{}.{}", outfile_name, file_extension);
-    download_video(&source, &temp_file, chunk_size).await.chain_err(|| "Could not download video")?;
+    download_video(&source, &temp_file, chunk_size)
+        .await
+        .chain_err(|| "Could not download video")?;
 
     // Convert to encoding of output file
     info!("Converting audio from {file_extension} type to {outfile_extension}...");
@@ -131,20 +139,19 @@ async fn run(args: Args) -> Result<()> {
 fn convert(file: &str, outfile: &str) -> Result<Output> {
     match OS::from_str(env::consts::OS)? {
         OS::LINUX => Command::new("ffmpeg")
-                        .arg("-i")
-                        .arg(file)
-                        .arg(outfile)
-                        .output()
-                        .chain_err(|| "Error while converting file"),
+            .arg("-i")
+            .arg(file)
+            .arg(outfile)
+            .output()
+            .chain_err(|| "Error while converting file"),
         OS::WINDOWS => Command::new("ffmpeg")
-                       .arg("-i")
-                       .arg(file)
-                       .arg(outfile)
-                       .output()
-                       .chain_err(|| "Error while converting file"),
+            .arg("-i")
+            .arg(file)
+            .arg(outfile)
+            .output()
+            .chain_err(|| "Error while converting file"),
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -153,21 +160,20 @@ mod tests {
 
     #[test]
     fn file_is_converted() {
-        const INPUT_FILE: &str = "assets/ducksong.mp4"; 
-        const OUTPUT_FILE: &str = "assets/ducksong.mp3"; 
-        const TEST_OUTPUT_FILE: &str = "assets/ducksong-test.mp3"; 
+        const INPUT_FILE: &str = "assets/ducksong.mp4";
+        const OUTPUT_FILE: &str = "assets/ducksong.mp3";
+        const TEST_OUTPUT_FILE: &str = "assets/ducksong-test.mp3";
 
         let output = convert(INPUT_FILE, OUTPUT_FILE);
 
         let output_file = File::open(OUTPUT_FILE).unwrap();
         let test_output_file = File::open(TEST_OUTPUT_FILE).unwrap();
 
-        assert!(output.is_ok()); 
+        assert!(output.is_ok());
         assert_eq!(file_length(&test_output_file), file_length(&output_file));
     }
 
     fn file_length(file: &File) -> u64 {
-        file.metadata().unwrap().len() 
+        file.metadata().unwrap().len()
     }
 }
-
